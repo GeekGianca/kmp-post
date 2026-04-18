@@ -1,38 +1,48 @@
 package co.com.gcuello.kmp.post
 
 import androidx.compose.runtime.*
-import co.com.gcuello.kmp.post.models.FakeData
 import co.com.gcuello.kmp.post.ui.PostDetailScreen
+import co.com.gcuello.kmp.post.ui.PostDetailViewModel
 import co.com.gcuello.kmp.post.ui.PostsScreen
+import co.com.gcuello.kmp.post.ui.PostsViewModel
 import co.com.gcuello.kmp.post.ui.uiModels.PostDetailUiState
-import co.com.gcuello.kmp.post.ui.uiModels.PostSearchMode
 import co.com.gcuello.kmp.post.ui.uiModels.PostsUiState
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun UiDemo() {
+    val postsVm: PostsViewModel = koinViewModel()
+    val uiState by postsVm.uiState.collectAsState()
+    val query by postsVm.query.collectAsState()
+    val searchMode by postsVm.searchMode.collectAsState()
+
     var selectedPostId by remember { mutableStateOf<Int?>(null) }
 
     if (selectedPostId == null) {
-        var query by remember { mutableStateOf("") }
-        var mode by remember { mutableStateOf(PostSearchMode.BY_TITLE) }
-
         PostsScreen(
-            uiState = PostsUiState.Content(FakeData.posts(30)),
+            uiState = uiState,
             query = query,
-            searchMode = mode,
-            onQueryChange = { query = it },
-            onSearchModeChange = { mode = it },
+            searchMode = searchMode,
+            onQueryChange = postsVm::onQueryChange,
+            onSearchModeChange = postsVm::onSearchModeChange,
             onPostClick = { selectedPostId = it },
-            onRetry = {}
+            onRetry = postsVm::sync
         )
     } else {
-        val post = FakeData.posts(1).first().copy(id = selectedPostId!!)
-        val comments = FakeData.comments(postId = selectedPostId!!, count = 14)
+        val postId = selectedPostId!!
+        val detailVm: PostDetailViewModel = koinViewModel(parameters = { parametersOf(postId) })
+        val comments by detailVm.comments.collectAsState()
+
+        val selectedPost = (uiState as? PostsUiState.Content)?.items?.find { it.id == postId }
 
         PostDetailScreen(
-            uiState = PostDetailUiState.Content(post, comments),
+            uiState = if (selectedPost != null)
+                PostDetailUiState.Content(selectedPost, comments)
+            else
+                PostDetailUiState.Loading,
             onBack = { selectedPostId = null },
-            onAddComment = { _, _, _ -> }
+            onAddComment = detailVm::addComment
         )
     }
 }

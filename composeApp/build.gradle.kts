@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.androidx.room)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -34,6 +34,9 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
+            implementation(libs.ktor.client.cio)
         }
         commonMain.dependencies {
             api(libs.koin.core)
@@ -52,21 +55,24 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.room.compiler)
-            implementation(libs.androidx.room.sqlite.wrapper)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.ktor.client.cio)
         }
     }
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
 }
 
 android {
@@ -97,8 +103,15 @@ android {
 }
 
 dependencies {
-    ksp(libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
     debugImplementation(libs.compose.uiTooling)
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 compose.desktop {

@@ -49,8 +49,10 @@ fun PostCard(
 
             Spacer(Modifier.height(12.dp))
 
+            val label = if (post.commentCount == 1) "1 comentario"
+                        else "${post.commentCount} comentarios"
             Text(
-                text = "Ver comentarios",
+                text = label,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
